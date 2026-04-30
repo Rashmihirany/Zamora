@@ -1,0 +1,204 @@
+/* Notification Popup Styles */
+
+@keyframes progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popupPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.notification-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 50px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.notification-popup {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-top: 4px solid #10b981;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.4s var(--ease-out), popupPulse 2s ease-in-out;
+  pointer-events: all;
+  position: relative;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 50%;
+  font-size: 1.5rem;
+}
+
+.notification-content {
+  flex: 1;
+  padding: 0.25rem 0;
+}
+
+.notification-message {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin: 0.25rem 0;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.notification-message:first-child {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.notification-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0;
+  margin: -0.5rem -0.5rem -0.5rem auto;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.notification-close:hover {
+  color: var(--text-primary);
+  background: rgba(197, 163, 88, 0.1);
+  border-radius: 50%;
+}
+
+.notification-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: #10b981;
+  border-radius: 0 0 12px 0;
+}
+
+/* Success Popup */
+.notification-popup:has(.notification-icon:has(i.fa-check-circle)) {
+  border-top-color: #10b981;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-check-circle)) .notification-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-check-circle)) .notification-progress {
+  background: #10b981;
+}
+
+/* Error Popup */
+.notification-popup:has(.notification-icon:has(i.fa-times-circle)) {
+  border-top-color: #ef4444;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-times-circle)) .notification-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-times-circle)) .notification-progress {
+  background: #ef4444;
+}
+
+/* Warning Popup */
+.notification-popup:has(.notification-icon:has(i.fa-exclamation-circle)) {
+  border-top-color: #f59e0b;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-exclamation-circle)) .notification-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-exclamation-circle)) .notification-progress {
+  background: #f59e0b;
+}
+
+/* Info Popup */
+.notification-popup:has(.notification-icon:has(i.fa-info-circle)) {
+  border-top-color: #3b82f6;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-info-circle)) .notification-icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.notification-popup:has(.notification-icon:has(i.fa-info-circle)) .notification-progress {
+  background: #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notification-popup-overlay {
+    padding-top: 20px;
+  }
+
+  .notification-popup {
+    width: 95%;
+    padding: 1.25rem;
+  }
+
+  .notification-message {
+    font-size: 0.9rem;
+  }
+
+  .notification-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+}

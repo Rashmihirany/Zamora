@@ -1,0 +1,38 @@
+{
+  "name": "zamora-nextjs",
+  "version": "1.0.0",
+  "description": "Zamora E-commerce - Next.js + MongoDB",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/seed.ts"
+  },
+  "dependencies": {
+    "@stripe/react-stripe-js": "^6.3.0",
+    "@stripe/stripe-js": "^9.3.1",
+    "bcryptjs": "^2.4.3",
+    "framer-motion": "^12.34.0",
+    "groq-sdk": "^0.37.0",
+    "mongoose": "^8.1.1",
+    "next": "^14.1.0",
+    "next-auth": "^4.24.5",
+    "nodemailer": "^7.0.13",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "stripe": "^22.1.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.11.16",
+    "@types/react": "^18.2.52",
+    "@types/react-dom": "^18.2.18",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
