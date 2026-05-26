@@ -19,6 +19,13 @@ export interface IGiftOrder extends Document {
   shippingAddress: string;
   totalAmount: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentMethod?: 'card';
+  paymentStatus?: 'paid' | 'unpaid';
+  paymentDetails?: {
+    method?: string;
+    cardType?: 'credit' | 'debit';
+    transactionId?: string;
+  };
   createdAt: Date;
 }
 
@@ -51,6 +58,24 @@ const GiftOrderSchema = new Schema<IGiftOrder>({
     type: String,
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending',
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['card'],
+    default: 'card',
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['paid', 'unpaid'],
+    default: 'unpaid',
+  },
+  paymentDetails: {
+    method: String,
+    cardType: {
+      type: String,
+      enum: ['credit', 'debit'],
+    },
+    transactionId: String,
   },
   createdAt: {
     type: Date,

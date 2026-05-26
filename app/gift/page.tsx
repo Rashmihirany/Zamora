@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import NotificationPopup from '@/components/NotificationPopup';
 
 function GiftOrderForm() {
   const { data: session, status } = useSession();
@@ -28,6 +29,19 @@ function GiftOrderForm() {
 
   const [submitting, setSubmitting] = useState(false);
 
+  // Card payment states
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+  const [cardType, setCardType] = useState<'credit' | 'debit'>('credit');
+
+  // Notification states
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+  const [notificationMessages, setNotificationMessages] = useState<string[]>([]);
+
   useEffect(() => {
     if (session?.user) {
       setSenderName(session.user.username || '');
@@ -44,18 +58,55 @@ function GiftOrderForm() {
     setQty((prev) => Math.max(1, prev + delta));
   };
 
+  const validateCardForm = (): boolean => {
+    if (!cardNumber || !cardName || !expiryDate || !cvv) {
+      setNotificationType('error');
+      setNotificationMessages(['Please fill in all card details']);
+      setShowNotification(true);
+      return false;
+    }
+    const cleanCardNum = cardNumber.replace(/\s/g, '');
+    if (cleanCardNum.length < 13 || cleanCardNum.length > 19) {
+      setNotificationType('error');
+      setNotificationMessages(['Invalid card number']);
+      setShowNotification(true);
+      return false;
+    }
+    if (cvv.length < 3 || cvv.length > 4) {
+      setNotificationType('error');
+      setNotificationMessages(['Invalid CVV']);
+      setShowNotification(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!recipientName || !recipientPhone || !shippingAddress) {
-      alert('Please fill in all required fields');
+      setNotificationType('error');
+      setNotificationMessages(['Please fill in all required fields']);
+      setShowNotification(true);
+      return;
+    }
+
+    if (!showCardForm) {
+      setNotificationType('error');
+      setNotificationMessages(['Please add card payment details']);
+      setShowNotification(true);
+      setShowCardForm(true);
+      return;
+    }
+
+    if (!validateCardForm()) {
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/gift-orders', {
+      const res = await fetch('/api/gift-orders/payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,18 +125,43 @@ function GiftOrderForm() {
           giftMessage,
           shippingAddress,
           total,
+          paymentMethod: 'card',
+          paymentDetails: {
+            cardType,
+            cardNumber: cardNumber.replace(/\s/g, ''),
+            cardName,
+            expiryDate,
+            transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          },
         }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        router.push(`/gift/success?orderId=${data.order._id}&recipient=${encodeURIComponent(recipientName)}`);
+        setNotificationType('success');
+        setNotificationMessages(['Payment successful!', 'Gift order placed successfully!']);
+        setShowNotification(true);
+        
+        // Clear form
+        setCardNumber('');
+        setCardName('');
+        setExpiryDate('');
+        setCvv('');
+        
+        // Redirect to success page after a delay
+        setTimeout(() => {
+          router.push(`/gift/success?orderId=${data.order._id}&recipient=${encodeURIComponent(recipientName)}&payment=true`);
+        }, 2000);
       } else {
-        alert(data.error || 'Failed to place gift order');
+        setNotificationType('error');
+        setNotificationMessages([data.error || 'Failed to place gift order']);
+        setShowNotification(true);
       }
-    } catch {
-      alert('Error placing gift order');
+    } catch (error: any) {
+      setNotificationType('error');
+      setNotificationMessages(['Error placing gift order', error.message || 'Please try again']);
+      setShowNotification(true);
     } finally {
       setSubmitting(false);
     }
@@ -305,6 +381,127 @@ function GiftOrderForm() {
               </p>
             )}
 
+            {/* Card Payment Section */}
+            {!showCardForm ? (
+              <button
+                type="button"
+                className="btn btn-secondary full-width"
+                style={{ marginBottom: '12px' }}
+                onClick={() => setShowCardForm(true)}
+              >
+                <i className="fas fa-credit-card"></i> ADD CARD PAYMENT
+              </button>
+            ) : (
+              <div className="checkout-section" style={{ marginBottom: '16px' }}>
+                <h3 className="checkout-section-title">Card Payment Details</h3>
+                
+                <div className="form-group">
+                  <label style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        type="radio"
+                        value="credit"
+                        checked={cardType === 'credit'}
+                        onChange={(e) => setCardType(e.target.value as 'credit' | 'debit')}
+                      />
+                      Credit Card
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        type="radio"
+                        value="debit"
+                        checked={cardType === 'debit'}
+                        onChange={(e) => setCardType(e.target.value as 'credit' | 'debit')}
+                      />
+                      Debit Card
+                    </label>
+                  </label>
+                </div>
+
+                <div className="form-group">
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder=" "
+                    value={cardNumber}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/\s/g, '');
+                      if (/^\d*$/.test(val)) {
+                        const formatted = val.replace(/(\d{4})(?=\d)/g, '$1 ');
+                        setCardNumber(formatted);
+                      }
+                    }}
+                    maxLength={19}
+                    required
+                  />
+                  <label className="form-label">Card Number</label>
+                </div>
+
+                <div className="form-group">
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder=" "
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    required
+                  />
+                  <label className="form-label">Cardholder Name</label>
+                </div>
+
+                <div className="checkout-form-row">
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder=" "
+                      value={expiryDate}
+                      onChange={(e) => {
+                        let val = e.target.value.replace(/\D/g, '');
+                        if (val.length >= 2) {
+                          val = val.slice(0, 2) + '/' + val.slice(2, 4);
+                        }
+                        setExpiryDate(val);
+                      }}
+                      maxLength={5}
+                      required
+                    />
+                    <label className="form-label">Expiry (MM/YY)</label>
+                  </div>
+
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder=" "
+                      value={cvv}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setCvv(val);
+                      }}
+                      maxLength={4}
+                      required
+                    />
+                    <label className="form-label">CVV</label>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-link"
+                  onClick={() => {
+                    setShowCardForm(false);
+                    setCardNumber('');
+                    setCardName('');
+                    setExpiryDate('');
+                    setCvv('');
+                  }}
+                >
+                  Remove Card
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               className="btn btn-primary full-width gift-submit-btn"
@@ -319,6 +516,14 @@ function GiftOrderForm() {
           </div>
         </div>
       </form>
+
+      {/* Notification Popup */}
+      <NotificationPopup
+        type={notificationType}
+        messages={notificationMessages}
+        isVisible={showNotification}
+        onClose={() => setShowNotification(false)}
+      />
     </div>
   );
 }
